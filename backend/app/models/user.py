@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime, Boolean, Enum
+from sqlalchemy import String, DateTime, Boolean, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
@@ -22,7 +22,7 @@ class Session(Base):
     __tablename__ = "sessions"
 
     sessionID: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    userID: Mapped[str] = mapped_column(String, nullable=False)
+    userID: Mapped[str] = mapped_column(String, ForeignKey("users.userID"), nullable=False)  # ← fixed
     jwtToken: Mapped[str] = mapped_column(String(512), nullable=False)
     expiresAt: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     isActive: Mapped[bool] = mapped_column(Boolean, default=True)
