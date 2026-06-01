@@ -12,6 +12,46 @@ from app.schemas.analysis import AnalysisResultResponse, FullResultResponse
 router = APIRouter()
 
 
+# ── GET /api/v1/results ───────────────────────────────────────────────────────
+# Lists all analysis results for the authenticated job seeker.
+
+@router.get("/results")
+def list_results(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from app.models.resume import Resume
+    from app.models.analysis import AnalysisResult, FeedbackItem
+
+    # Get all resume IDs belonging to this user
+    resume_ids = [r.resumeID for r in db.query(Resume).filter(Resume.userID == current_user.userID).all()]
+
+    if not resume_ids:
+        return {"results": []}
+
+    results = (
+        db.query(AnalysisResult)
+        .filter(AnalysisResult.resumeID.in_(resume_ids))
+        .order_by(AnalysisResult.timestamp.desc())
+        .all()
+    )
+
+    items = []
+    for r in results:
+        feedback = db.query(FeedbackItem).filter(FeedbackItem.resultID == r.resultID).first()
+        items.append({
+            "resultID": r.resultID,
+            "resumeID": r.resumeID,
+            "jdID": r.jdID,
+            "finalScore": r.finalScore,
+            "matchedKeywords": r.matchedKeywords,
+            "missingCount": len(feedback.missingKeywords) if feedback else 0,
+            "timestamp": r.timestamp,
+        })
+
+    return {"results": items}
+
+
 # ── POST /api/v1/js/upload ────────────────────────────────────────────────────
 # Accepts resume file + job description text, runs the full NLP pipeline,
 # and returns the result + feedback in one response.
