@@ -8,7 +8,6 @@ import {
   AlertCircle,
   ArrowLeft,
   LayoutDashboard,
-  FileStack,
   Briefcase,
   Settings,
   HelpCircle,
@@ -69,7 +68,6 @@ const Sidebar = ({ active, onLogout, isPending }: { active: string; onLogout: ()
     <div className="space-y-1 flex-1">
       <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/dashboard" />
       <SidebarItem icon={BarChart3} label="Analytics" href="/analytics" active={active === "analytics"} />
-      <SidebarItem icon={FileStack} label="Resume Bank" href="/resumes" />
       <SidebarItem icon={Briefcase} label="Job Matches" href="/matches" />
       <SidebarItem icon={Settings} label="Settings" href="/settings" />
     </div>
@@ -141,7 +139,7 @@ const AnalyticsList = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {items.map((item, i) => {
+            {items.map((item) => {
               const norm = item.finalScore <= 1 ? item.finalScore * 100 : item.finalScore
               const display = Math.round(norm)
               const tier = scoreColor(norm)

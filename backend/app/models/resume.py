@@ -25,6 +25,7 @@ class ExtractedProfile(Base):
     candidateName: Mapped[str] = mapped_column(String(150), nullable=True)
     email: Mapped[str] = mapped_column(String(255), nullable=True)
     phone: Mapped[str] = mapped_column(String(20), nullable=True)
+    linkedin: Mapped[str] = mapped_column(String(255), nullable=True)
     skills: Mapped[list] = mapped_column(JSON, default=list)          # ["Python", "SQL", ...]
     education: Mapped[list] = mapped_column(JSON, default=list)        # [{"degree": ..., "institute": ...}]
     experience: Mapped[list] = mapped_column(JSON, default=list)       # [{"title": ..., "company": ..., "years": ...}]

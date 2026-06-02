@@ -1,73 +1,117 @@
-# React + TypeScript + Vite
+# CVPilot Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, high-performance React application for NLP-powered resume evaluation. Built with a focus on design quality, state management efficiency, and a seamless user experience.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Project Structure
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+frontend/
+├── src/
+│   ├── api/               # Axios service layer (auth, analysis)
+│   ├── components/
+│   │   └── ui/            # ShadcnUI base components (Button, Input, etc.)
+│   ├── hooks/             # Custom React Query hooks (useAnalysis, useAuth)
+│   ├── pages/             # Route-level page components
+│   │   ├── Landing.tsx    # Public marketing page
+│   │   ├── Login.tsx      # Authentication form
+│   │   ├── Register.tsx   # Account creation form
+│   │   ├── Dashboard.tsx  # Resume upload and JD entry
+│   │   ├── Analytics.tsx  # Match results and candidate profile view
+│   │   ├── Resumes.tsx    # Resume history (Resume Bank)
+│   │   ├── Matches.tsx    # Job match recommendations
+│   │   └── Settings.tsx   # User account settings
+│   ├── types/             # TypeScript interfaces (analysis, auth)
+│   ├── lib/               # Utility functions (cn, formatters)
+│   └── main.tsx           # Application entry point and router setup
+├── public/                # Static assets
+├── index.html
+├── tailwind.config.ts
+├── tsconfig.json
+└── vite.config.ts
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Technology Stack
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| Framework | React 19 + Vite | Component model and fast HMR development |
+| Language | TypeScript | Type-safe component and API contract enforcement |
+| Styling | Tailwind CSS + ShadcnUI | Utility-first design with accessible, composable base components |
+| Animations | Framer Motion | Layout transitions and micro-interaction animations |
+| Data Fetching | TanStack React Query | Server state management, caching, and request deduplication |
+| HTTP Client | Axios | API communication with JWT interceptor |
+| Routing | React Router 6 | Client-side declarative routing |
+| Icons | Lucide React | Consistent, lightweight SVG icon set |
+
+---
+
+## Application Pages
+
+### Landing
+Public-facing marketing page with feature highlights and calls-to-action for registration.
+
+### Dashboard
+The primary entry point for authenticated users. Provides a file picker for PDF/DOCX resumes and a text area for pasting job descriptions. Triggers the backend analysis pipeline on submission and redirects to the Analytics view upon completion.
+
+### Analytics
+Displays the full analysis report for a given `result_id`. Includes:
+- A radial match score dial with tier-based colour coding (Excellent / Strong / Partial / Low).
+- Keyword coverage metrics: matched keywords and missing keywords separated into tagged chips.
+- An AI suggestions panel with numbered, actionable recommendations.
+- The extracted candidate profile: name, contact details, detected skills, education, and experience.
+
+---
+
+## State Management
+
+Data fetching is handled entirely through **TanStack React Query** with dedicated hooks in `src/hooks/`:
+
+- `useAnalysisResult(resultId)` — Fetches a single full result. Configured with `refetchOnWindowFocus: false` and a 5-minute `staleTime` to prevent redundant GET requests when switching browser tabs.
+- `useAnalysisList()` — Fetches the user's analysis history.
+- `useUploadResume()` — Mutation hook wrapping the `POST /api/v1/js/upload` endpoint.
+- `useLogin()` / `useLogout()` — Authentication mutations with automatic token handling via Axios interceptor.
+
+---
+
+## Execution Instructions
+
+### Prerequisites
+- Node.js 18+
+- Backend server running on `http://localhost:8000`
+
+### Development Server
+
+```bash
+# Install dependencies
+npm install
+
+# Start the development server (defaults to http://localhost:5173)
+npm run dev
 ```
+
+### Production Build
+
+```bash
+npm run build
+npm run preview
+```
+
+### Environment Variables
+
+Create a `.env` file in the `frontend/` directory if the backend URL differs from the default:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+---
+
+## Performance Notes
+
+- **Request Deduplication**: React Query ensures that identical requests triggered simultaneously (e.g., from React Strict Mode double-renders) are deduplicated into a single network call.
+- **Window Focus Refetch Disabled**: The `useAnalysisResult` hook does not refetch when the user returns to the tab, preventing the repeated GET requests previously observed in backend logs.
+- **Bundle Optimization**: Vite's Rollup-based production build applies tree-shaking and code splitting automatically for minimal initial load time.

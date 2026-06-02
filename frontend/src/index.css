@@ -1,96 +1,152 @@
 @import "tailwindcss";
 
+/* ── Light Theme Tokens (Tailwind v4 @theme) ───────────────────────────────── */
 @theme {
   --color-background: hsl(210 40% 98%);
-  --color-foreground: hsl(222.2 84% 4.9%);
-  
+  --color-foreground: hsl(222 47% 11%);
+
   --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222.2 84% 4.9%);
-  
+  --color-card-foreground: hsl(222 47% 11%);
+
   --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222.2 84% 4.9%);
-  
+  --color-popover-foreground: hsl(222 47% 11%);
+
   --color-primary: hsl(212 100% 37%);
   --color-primary-foreground: hsl(210 40% 98%);
-  
-  --color-secondary: hsl(210 40% 96.1%);
-  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
-  
+
+  --color-secondary: hsl(210 40% 96%);
+  --color-secondary-foreground: hsl(222 47% 11%);
+
   --color-muted: hsl(215 16% 47%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
-  
-  --color-accent: hsl(210 40% 96.1%);
-  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
-  
-  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-muted-foreground: hsl(215 16% 47%);
+
+  --color-accent: hsl(210 40% 96%);
+  --color-accent-foreground: hsl(222 47% 11%);
+
+  --color-destructive: hsl(0 84% 60%);
   --color-destructive-foreground: hsl(210 40% 98%);
-  
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
+
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
   --color-ring: hsl(212 100% 37%);
-  
+
+  --color-success: hsl(142 76% 36%);
+  --color-warning: hsl(38 92% 50%);
+
   --radius-xl: 1.5rem;
   --radius-lg: 1.25rem;
   --radius-md: 0.75rem;
   --radius-sm: 0.5rem;
-
-  --color-success: hsl(142 76% 45%);
-  --color-warning: hsl(38 92% 50%);
 }
 
+/* ── CSS Variable Layers ───────────────────────────────────────────────────── */
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
-    --primary: 212 100% 37%;
+    /* Light mode — clean, airy whites */
+    --background:         210 40% 98%;
+    --foreground:         222 47% 11%;
+    --primary:            212 100% 37%;
     --primary-foreground: 210 40% 98%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 215 16% 47%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --card:               0 0% 100%;
+    --card-foreground:    222 47% 11%;
+    --popover:            0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --secondary:          210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted:              215 16% 47%;
+    --muted-foreground:   215 16% 47%;
+    --accent:             210 40% 96%;
+    --accent-foreground:  222 47% 11%;
+    --destructive:        0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 212 100% 37%;
-    --radius: 1.5rem;
+    --border:             214 32% 91%;
+    --input:              214 32% 91%;
+    --ring:               212 100% 37%;
+    --radius:             1.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /*
+      Dark mode design rationale:
+      - Background: Deep navy (not pure black) — easier on the eyes
+      - Surface:    Slightly elevated slate — creates visual depth
+      - Card:       Another step up — separates components clearly
+      - Primary:    Brand blue shifted brighter for dark contrast
+      - Borders:    Subtle, just enough to define edges
+      - Muted text: 60%+ lightness to remain legible on dark surfaces
+    */
+
+    /* Page background — deepest layer */
+    --background:         224 28% 8%;
+
+    /* Main text — near-white with slight cool tint */
+    --foreground:         210 30% 95%;
+
+    /* Brand blue — lightened to stay vibrant on dark */
+    --primary:            212 90% 55%;
+    --primary-foreground: 224 28% 8%;
+
+    /* Cards — lifted surface above the background */
+    --card:               224 25% 13%;
+    --card-foreground:    210 30% 95%;
+
+    /* Popovers — same as card */
+    --popover:            224 25% 13%;
+    --popover-foreground: 210 30% 95%;
+
+    /* Secondary surfaces — e.g. slate-50 equivalent in dark */
+    --secondary:          224 22% 18%;
+    --secondary-foreground: 210 30% 95%;
+
+    /* Muted surfaces and text */
+    --muted:              224 22% 18%;
+    --muted-foreground:   215 15% 62%;
+
+    /* Accent — same as secondary in dark */
+    --accent:             224 22% 18%;
+    --accent-foreground:  210 30% 95%;
+
+    /* Destructive stays red but a bit muted */
+    --destructive:        0 65% 50%;
+    --destructive-foreground: 210 30% 95%;
+
+    /* Borders — subtle enough not to dominate */
+    --border:             224 20% 20%;
+    --input:              224 22% 17%;
+
+    /* Focus ring — the brand blue */
+    --ring:               212 90% 55%;
   }
 }
 
+/* ── Base Styles ───────────────────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border;
   }
+
+  html {
+    /* Smooth theme transitions — avoids jarring flash */
+    transition: background-color 0.25s ease, color 0.2s ease;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Dark mode scrollbar styling */
+  .dark ::-webkit-scrollbar {
+    width: 6px;
+  }
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(224 28% 10%);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(224 20% 25%);
+    border-radius: 3px;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(224 20% 35%);
   }
 }

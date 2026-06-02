@@ -1,24 +1,20 @@
 import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { 
   LayoutDashboard, 
   BarChart3, 
-  FileStack, 
   Briefcase, 
   Settings, 
   HelpCircle, 
   LogOut,
   Bell,
-  Search,
   UploadCloud,
-  ChevronRight,
   TrendingUp,
-  MapPin,
-  Clock,
   DollarSign,
-  Loader2
+  Loader2,
+  Cpu
 } from "lucide-react"
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useUploadResume, useAnalyzeResume } from "@/hooks/useAnalysis"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
@@ -63,6 +59,58 @@ const SidebarItem = ({ icon: Icon, label, href, active, onClick }: any) => {
   )
 }
 
+const ANALYSIS_STEPS = [
+  "Parsing resume structure...",
+  "Extracting entities and skills...",
+  "Running semantic analysis...",
+  "Generating match score...",
+  "Preparing your results...",
+]
+
+const FullPageLoader = () => {
+  const [stepIndex, setStepIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setStepIndex(i => (i + 1) % ANALYSIS_STEPS.length)
+    }, 2200)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center gap-8"
+    >
+      <div className="relative w-24 h-24">
+        <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Cpu className="w-8 h-8 text-primary" />
+        </div>
+      </div>
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">Analyzing your resume</h2>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={stepIndex}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="text-muted-foreground text-sm"
+          >
+            {ANALYSIS_STEPS[stepIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+      <p className="text-xs text-muted-foreground/60">This may take up to 30 seconds</p>
+    </motion.div>
+  )
+}
+
 const Dashboard = () => {
   const location = useLocation()
   const navigate = useNavigate()
@@ -73,6 +121,7 @@ const Dashboard = () => {
   
   const [file, setFile] = useState<File | null>(null)
   const [jd, setJd] = useState("")
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   const handleLogout = () => {
     logoutMutation.mutate()
@@ -90,11 +139,14 @@ const Dashboard = () => {
       const formData = new FormData()
       formData.append("resume", file)
       formData.append("job_description", jd)
+      setIsAnalyzing(true)
       
       uploadMutation.mutate(formData, {
         onSuccess: (data: any) => {
-          // The backend returns result_id, feedback_id, score
           navigate(`/analytics?id=${data.result_id}`)
+        },
+        onError: () => {
+          setIsAnalyzing(false)
         }
       })
     }
@@ -102,6 +154,7 @@ const Dashboard = () => {
   
   return (
     <div className="min-h-screen bg-background flex font-geist">
+      <AnimatePresence>{isAnalyzing && <FullPageLoader />}</AnimatePresence>
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-white flex flex-col p-6 fixed inset-y-0 h-screen overflow-y-auto">
         <div className="flex items-center gap-2 mb-10 px-2">
@@ -112,7 +165,6 @@ const Dashboard = () => {
         <div className="space-y-1 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/dashboard" active={location.pathname === '/dashboard'} />
           <SidebarItem icon={BarChart3} label="Analytics" href="/analytics" />
-          <SidebarItem icon={FileStack} label="Resume Bank" href="/resumes" />
           <SidebarItem icon={Briefcase} label="Job Matches" href="/matches" />
           <SidebarItem icon={Settings} label="Settings" href="/settings" />
         </div>
