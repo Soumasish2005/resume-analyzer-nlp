@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, status
+import logging
+from fastapi import APIRouter, Depends, UploadFile, File, Form, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -10,6 +11,7 @@ from app.services.analysis_service import get_result_by_id, get_full_result
 from app.schemas.analysis import AnalysisResultResponse, FullResultResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 # ── GET /api/v1/results ───────────────────────────────────────────────────────
@@ -63,29 +65,46 @@ async def upload_and_analyze(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Client-side validation mirrors (server enforces regardless)
-    validate_resume_file(resume)
-    validate_job_description(job_description)
+    try:
+        # 1. Basic validation
+        if not resume.filename:
+            raise HTTPException(status_code=400, detail="No filename provided")
+            
+        validate_resume_file(resume)
+        validate_job_description(job_description)
 
-    file_bytes = await resume.read()
-    validate_file_size(file_bytes)
+        # 2. Read and validate size
+        file_bytes = await resume.read()
+        validate_file_size(file_bytes)
 
-    file_ext = resume.filename.rsplit(".", 1)[-1].lower()
+        # 3. Safe extension extraction
+        if "." not in resume.filename:
+            raise HTTPException(status_code=400, detail="File must have an extension (e.g., .pdf)")
+        file_ext = resume.filename.rsplit(".", 1)[-1].lower()
 
-    outcome = run_analysis_pipeline(
-        db=db,
-        file_bytes=file_bytes,
-        file_ext=file_ext,
-        jd_text=job_description,
-        user_id=current_user.userID
-    )
+        # 4. Execute pipeline
+        outcome = run_analysis_pipeline(
+            db=db,
+            file_bytes=file_bytes,
+            file_ext=file_ext,
+            jd_text=job_description,
+            user_id=current_user.userID
+        )
 
-    return {
-        "message": "Analysis complete",
-        "result_id": outcome["result_id"],
-        "feedback_id": outcome["feedback_id"],
-        "score": outcome["score"]
-    }
+        return {
+            "message": "Analysis complete",
+            "result_id": outcome.get("result_id"),
+            "feedback_id": outcome.get("feedback_id"),
+            "score": outcome.get("score")
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Upload error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during file analysis. Please check file format and try again."
+        )
 
 
 # ── POST /api/v1/analyze ──────────────────────────────────────────────────────
