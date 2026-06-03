@@ -85,6 +85,24 @@ The system follows a **Step-by-Step Instrumentation** pattern. Every analysis is
 
 ## Execution Instructions
 
+### Option 1: Using Docker (Recommended)
+You can run the backend as part of the full stack from the root directory, or individually using the Dockerfile.
+
+**From the Root Directory (Full Stack):**
+```bash
+docker compose up --build backend
+```
+
+**Using Docker Build:**
+```bash
+docker build -t cvpilot-backend .
+docker run -p 8000:8000 --env-file .env cvpilot-backend
+```
+
+---
+
+### Option 2: Local Manual Setup
+
 ### 1. Environment Setup
 Ensure you have Python 3.10+ installed.
 ```bash

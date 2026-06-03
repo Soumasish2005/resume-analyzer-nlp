@@ -21,16 +21,17 @@ services:
     build: ./backend
     container_name: analyzer_backend
     restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override the DATABASE_URL from .env to use the internal Docker network
+      - DATABASE_URL=postgresql://analyzer_user:analyzer_pass@db:5432/resume_analyzer
+      - APP_ENV=production
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://analyzer_user:analyzer_pass@db:5432/resume_analyzer
-      - JWT_SECRET_KEY=your-super-secret-key-change-this
-      - GOOGLE_API_KEY=AIzaSyApLgld3JsAGHKi7IItWk1IFB1peTDrjX8
-      - APP_ENV=production
     volumes:
       - ./backend/temp_uploads:/app/temp_uploads
 
