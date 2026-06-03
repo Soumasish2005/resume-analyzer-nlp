@@ -117,12 +117,30 @@ resume-analyzer/
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Run with Docker (Recommended)
+This is the easiest way to start the entire system, including the database.
+
+1. Ensure you have **Docker** and **Docker Compose** installed.
+2. Configure your `.env` in the `backend` directory (see [Configuration](#configuration)).
+3. Run the following command from the root directory:
+   ```bash
+   docker compose up --build
+   ```
+4. Access the application:
+   - **Frontend**: http://localhost
+   - **Backend API**: http://localhost:8000
+   - **PostgreSQL**: Port 5435 (on host)
+
+---
+
+### Option 2: Local Manual Setup
+
+#### Prerequisites
 - Python 3.10+
 - Node.js 18+
 - PostgreSQL instance (local or Docker)
 
-### Backend
+#### Backend
 ```bash
 cd backend
 python -m venv .venv
@@ -139,7 +157,7 @@ python migrate.py
 uvicorn app.main:app --reload --port 8000
 ```
 
-### Frontend
+#### Frontend
 ```bash
 cd frontend
 npm install

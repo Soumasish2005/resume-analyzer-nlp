@@ -79,7 +79,25 @@ Data fetching is handled entirely through **TanStack React Query** with dedicate
 
 ## Execution Instructions
 
-### Prerequisites
+### Option 1: Using Docker (Recommended)
+You can run the frontend as part of the full stack from the root directory, or individually using the Dockerfile.
+
+**From the Root Directory (Full Stack):**
+```bash
+docker compose up --build frontend
+```
+
+**Using Docker Build:**
+```bash
+docker build -t cvpilot-frontend .
+docker run -p 80:80 cvpilot-frontend
+```
+
+---
+
+### Option 2: Local Manual Setup
+
+#### Prerequisites
 - Node.js 18+
 - Backend server running on `http://localhost:8000`
 
