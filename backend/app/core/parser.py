@@ -1,171 +1,162 @@
-import fitz  # PyMuPDF
+import pdfplumber
+import fitz  # PyMuPDF fallback
 import io
+import re
 from docx import Document
 from fastapi import HTTPException, status
+from app.core.nlp_engine import nlp
 
+# ── Section Mapping ──────────────────────────────────────────────────────────
 
-# ── PDF extraction ────────────────────────────────────────────────────────────
+SECTION_MAP = {
+    "summary": ["summary", "objective", "professional summary", "about me", "profile", "professional profile"],
+    "experience": ["experience", "employment", "work history", "professional experience", "work experience", "career history", "internships", "internship"],
+    "skills": ["skills", "technical skills", "core competencies", "technologies", "key skills", "expertise"],
+    "projects": ["projects", "personal projects", "academic projects", "key projects", "technical projects"],
+    "education": ["education", "academic background", "qualifications", "academic profile", "academic credentials"],
+    "contact": ["contact", "personal info", "contact information"]
+}
 
-def extract_text_from_pdf(file_bytes: bytes) -> str:
+# ── Header Detection ─────────────────────────────────────────────────────────
+
+def is_header(line_text: str, font_size: float = 0, is_bold: bool = False) -> bool:
     """
-    Extracts text from PDF using a multi-strategy approach:
-    1. Block-based extraction sorted by position (handles multi-column layouts)
-    2. Falls back to raw text extraction if blocks yield too little
-    3. Tries pdfminer as final fallback for complex/tagged PDFs
+    Heuristic to determine if a line is a section header.
+    - No verbs (POS tagging)
+    - Short length (usually < 5 words)
+    - High capitalization or bold/large font
     """
+    text = line_text.strip()
+    if not text or len(text) > 50:
+        return False
+    
+    # Short-circuit for extremely common keywords (always headers if short)
+    if text.lower() in ["education", "skills", "experience", "projects", "summary", "contact"]:
+        return True
+        
+    # Pass 1: POS Tagging - Lines with no VERB are likely headers
+    doc = nlp(text)
+    has_verb = any(token.pos_ == "VERB" for token in doc)
+    if has_verb:
+        return False
+
+    # Pass 1: Visual/Textual heuristics
+    word_count = len(text.split())
+    if word_count > 6:
+        return False
+
+    if text.isupper() and word_count < 4:
+        return True
+        
+    if (is_bold or font_size > 11.5) and word_count < 5:
+        return True
+        
+    return False
+
+# ── PDF Extraction (Two-Pass) ────────────────────────────────────────────────
+
+def extract_sections_from_pdf(file_bytes: bytes) -> dict:
+    """
+    Extracts text using pdfplumber as primary with a two-pass approach:
+    1. Line classification (Header vs Content)
+    2. Bucketing into semantic sections
+    """
+    sections = {k: [] for k in SECTION_MAP.keys()}
+    sections["other"] = []
+    current_section = "other"
+    
+    try:
+        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+            for page in pdf.pages:
+                # Extract words with visual attributes
+                words = page.extract_words(extra_attrs=["fontname", "size"])
+                if not words:
+                    continue
+
+                # Group words into lines based on vertical position (top)
+                lines = {}
+                for w in words:
+                    top = round(w["top"], 1)
+                    if top not in lines:
+                        lines[top] = []
+                    lines[top].append(w)
+                
+                # Process lines in order
+                last_bottom = 0
+                for top in sorted(lines.keys()):
+                    line_words = sorted(lines[top], key=lambda x: x["x0"])
+                    line_text = " ".join(w["text"] for w in line_words).strip()
+                    
+                    if not line_text:
+                        continue
+                        
+                    avg_size = sum(w["size"] for w in line_words) / len(line_words)
+                    is_bold = any(re.search(r"bold|heavy|black", w["fontname"].lower()) for w in line_words)
+                    
+                    # Pass 2: Header detection and section switching
+                    if is_header(line_text, avg_size, is_bold):
+                        clean_header = line_text.lower().strip()
+                        found_new_section = False
+                        for sec, keywords in SECTION_MAP.items():
+                            if any(k == clean_header or (len(clean_header) < 20 and k in clean_header) for k in keywords):
+                                current_section = sec
+                                found_new_section = True
+                                break
+                        
+                        # If it's a header but not in our map, keep it in "other" or current
+                        if not found_new_section:
+                            sections[current_section].append(line_text)
+                    else:
+                        sections[current_section].append(line_text)
+
+        # Post-process: Join lines and remove empty sections
+        result = {k: "\n".join(v).strip() for k, v in sections.items() if v}
+        
+        # If result is too empty, something went wrong (likely scanned PDF)
+        if len("".join(result.values())) < 100:
+            return _fallback_py_mu_pdf(file_bytes)
+            
+        return result
+
+    except Exception:
+        return _fallback_py_mu_pdf(file_bytes)
+
+def _fallback_py_mu_pdf(file_bytes: bytes) -> dict:
+    """Fallback using PyMuPDF (fitz) for raw text if pdfplumber fails."""
     try:
         pdf = fitz.open(stream=file_bytes, filetype="pdf")
-
-        if pdf.is_encrypted:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password-protected PDFs are not supported. Please unlock the file first."
-            )
-
-        # Strategy 1 — block-based sorted extraction
-        text = _extract_blocks_sorted(pdf)
-
-        # Strategy 2 — fallback to raw if blocks gave too little
-        if len(text.strip()) < 100:
-            text = _extract_raw(pdf)
-
+        text = "\n".join(page.get_text() for page in pdf)
         pdf.close()
-
-        # Strategy 3 — pdfminer fallback for complex layouts
-        if len(text.strip()) < 100:
-            text = _extract_with_pdfminer(file_bytes)
-
-        if not text.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No readable text found in the PDF. The file may be scanned or image-based."
-            )
-
-        return text
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Failed to parse PDF: {str(e)}"
-        )
-
-
-def _extract_blocks_sorted(pdf) -> str:
-    """
-    Extracts text blocks from each page and sorts them by vertical
-    then horizontal position. This correctly handles two-column
-    resume layouts that confuse simple top-to-bottom extraction.
-    """
-    full_text = []
-
-    for page in pdf:
-        # Get all text blocks: (x0, y0, x1, y1, text, block_no, block_type)
-        blocks = page.get_text("blocks")
-
-        # Filter to text blocks only (block_type == 0), skip image blocks
-        text_blocks = [b for b in blocks if b[6] == 0]
-
-        # Sort: top to bottom (y0), then left to right (x0)
-        text_blocks.sort(key=lambda b: (round(b[1] / 20), b[0]))
-
-        page_text = "\n".join(b[4].strip() for b in text_blocks if b[4].strip())
-        full_text.append(page_text)
-
-    return "\n\n".join(full_text)
-
-
-def _extract_raw(pdf) -> str:
-    """Simple fallback — extracts all text per page without sorting."""
-    return "\n".join(page.get_text() for page in pdf)
-
-
-def _extract_with_pdfminer(file_bytes: bytes) -> str:
-    """
-    pdfminer.six fallback for tagged or complex PDFs that PyMuPDF struggles with.
-    Only called when both block and raw strategies yield < 100 chars.
-    """
-    try:
-        from pdfminer.high_level import extract_text as pdfminer_extract
-        return pdfminer_extract(io.BytesIO(file_bytes))
-    except ImportError:
-        return ""
+        return {"other": text, "is_fallback": True}
     except Exception:
-        return ""
+        return {"other": ""}
 
+# ── DOCX Extraction ──────────────────────────────────────────────────────────
 
-# ── DOCX extraction ───────────────────────────────────────────────────────────
-
-def extract_text_from_docx(file_bytes: bytes) -> str:
-    """
-    Extracts text from DOCX including:
-    - Regular paragraphs
-    - Tables (common in resume layouts)
-    - Text boxes via XML fallback
-    """
+def extract_text_from_docx(file_bytes: bytes) -> dict:
+    """Extracts text from DOCX. Currently simple, but returns dict for consistency."""
     try:
         doc = Document(io.BytesIO(file_bytes))
-        parts = []
-
-        # Paragraphs
-        for para in doc.paragraphs:
-            if para.text.strip():
-                parts.append(para.text.strip())
-
-        # Tables — many resume templates use tables for layout
+        parts = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
+        
+        # Tables
         for table in doc.tables:
             for row in table.rows:
-                row_text = " | ".join(
-                    cell.text.strip() for cell in row.cells if cell.text.strip()
-                )
-                if row_text:
-                    parts.append(row_text)
+                parts.append(" | ".join(cell.text.strip() for cell in row.cells if cell.text.strip()))
+        
+        return {"other": "\n".join(parts)}
+    except Exception:
+        return {"other": ""}
 
-        text = "\n".join(parts)
+# ── Unified Registry ──────────────────────────────────────────────────────────
 
-        # Fallback: extract raw XML text if normal extraction yields too little
-        if len(text.strip()) < 100:
-            text = _extract_docx_xml_fallback(doc)
-
-        if not text.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No readable text found in the DOCX file."
-            )
-
-        return text
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Failed to parse DOCX: {str(e)}"
-        )
-
-
-def _extract_docx_xml_fallback(doc) -> str:
+def extract_text(file_bytes: bytes, file_ext: str) -> dict:
     """
-    Extracts all raw text from DOCX XML body.
-    Catches text inside shapes, text boxes, and custom XML elements
-    that python-docx's paragraph/table API misses.
-    """
-    from docx.oxml.ns import qn
-    body = doc.element.body
-    texts = [node.text for node in body.iter() if node.text and node.text.strip()]
-    return "\n".join(texts)
-
-
-# ── Unified entry point ───────────────────────────────────────────────────────
-
-def extract_text(file_bytes: bytes, file_ext: str) -> str:
-    """
-    Routes to the correct parser based on file extension.
-    file_ext should be 'pdf' or 'docx' (lowercase, no dot).
+    Main entry point for file parsing.
+    Returns a dictionary of sections: { "skills": "...", "experience": "...", ... }
     """
     if file_ext == "pdf":
-        return extract_text_from_pdf(file_bytes)
+        return extract_sections_from_pdf(file_bytes)
     elif file_ext == "docx":
         return extract_text_from_docx(file_bytes)
     else:

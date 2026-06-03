@@ -2,81 +2,64 @@ from app.core.gap_analyzer import categorize_gaps
 
 def generate_feedback(
     match_score: float,
-    missing_keywords: list[str],
+    gaps: list[dict], # Now takes a list of gap dicts
     matched_keywords: list[str],
-    extracted_profile: dict
+    extracted_profile: dict,
+    breakdown: dict = None,
+    llm_review: dict = None
 ) -> dict:
     """
-    Consumes NLP engine output and produces structured, actionable feedback.
-
-    Returns a dict with:
-    - suggestions: list of specific improvement actions
-    - highlighted_sections: resume sections that need attention
+    Consumes multi-layer analysis output and produces rich, explainable feedback.
     """
     suggestions = []
     highlighted_sections = []
 
-    # ── Score-based feedback ──────────────────────────────────────────────────
-    if match_score < 0.3:
-        suggestions.append(
-            "Your resume has a low match with this job description. "
-            "Consider significantly tailoring your resume to this role."
-        )
-    elif match_score < 0.6:
-        suggestions.append(
-            "Your resume partially matches the job description. "
-            "Incorporate more relevant keywords from the JD."
-        )
-    else:
-        suggestions.append(
-            "Strong match! Focus on fine-tuning specific missing keywords to maximize your score."
-        )
+    # ── Explainability Block ──────────────────────────────────────────────────
+    if breakdown:
+        if breakdown.get("skills_score", 0) > 0.8:
+            suggestions.append("Exceptional skills alignment with the role requirements.")
+        if breakdown.get("experience_score", 0) < 0.5:
+            suggestions.append("Work experience section needs better alignment with industry standards for this role.")
+            highlighted_sections.append("Experience")
 
-    # ── Keyword gap feedback ──────────────────────────────────────────────────
-    categorized = categorize_gaps(missing_keywords)
+    # ── LLM Recruit Review Integration ────────────────────────────────────────
+    if llm_review:
+        if isinstance(llm_review, dict):
+            verdict = llm_review.get("verdict", "")
+            if verdict:
+                suggestions.append(f"Recruiter Assessment: {verdict}")
+            
+            rewrites = llm_review.get("rewrite_suggestions", [])
+            for r in rewrites[:2]:
+                suggestions.append(f"Resume Tip: {r}")
+        else:
+            # Handle string case (Direct review or fallback)
+            suggestions.append(f"Recruiter Assessment: {llm_review}")
+
+    # ── Keyword gap feedback (Ontology aware) ─────────────────────────────────
+    categorized = categorize_gaps(gaps)
 
     if "Technical Skills" in categorized:
         tech = categorized["Technical Skills"]
         suggestions.append(
-            f"Add these technical skills if you have experience with them: {', '.join(tech[:8])}."
+            f"Address missing key skills: {', '.join(tech[:5])}."
         )
         highlighted_sections.append("Skills")
 
-    if "Tools" in categorized:
-        tools = categorized["Tools"]
-        suggestions.append(
-            f"Mention these tools in your experience or skills section: {', '.join(tools[:5])}."
-        )
-        highlighted_sections.append("Skills")
-
-    if "Soft Skills" in categorized:
-        soft = categorized["Soft Skills"]
-        suggestions.append(
-            f"Highlight these soft skills in your summary or experience: {', '.join(soft[:5])}."
-        )
-        highlighted_sections.append("Summary / Objective")
-
-    # ── Profile completeness feedback ─────────────────────────────────────────
+    # ── Profile completeness ──────────────────────────────────────────────────
     if not extracted_profile.get("skills"):
-        suggestions.append("No skills section detected. Add a dedicated Skills section to your resume.")
+        suggestions.append("Add a dedicated Skills section to highlight your technical stack.")
         highlighted_sections.append("Skills")
-
-    if not extracted_profile.get("education"):
-        suggestions.append("Education section appears missing or undetected. Ensure it is clearly labeled.")
-        highlighted_sections.append("Education")
 
     if not extracted_profile.get("experience"):
-        suggestions.append("Work experience section appears missing or undetected. Ensure it is clearly labeled.")
+        suggestions.append("Ensure your professional experience is clearly listed with bullet points.")
         highlighted_sections.append("Experience")
 
-    if not extracted_profile.get("name"):
-        suggestions.append("Candidate name could not be detected. Ensure your name appears at the top of the resume.")
-        highlighted_sections.append("Header")
-
-    # Deduplicate highlighted sections
+    # Deduplicate 
     highlighted_sections = list(dict.fromkeys(highlighted_sections))
 
     return {
         "suggestions": suggestions,
-        "highlighted_sections": highlighted_sections
+        "highlighted_sections": highlighted_sections,
+        "overall_assessment": (llm_review.get("verdict") if isinstance(llm_review, dict) else llm_review) if llm_review else None
     }

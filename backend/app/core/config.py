@@ -12,5 +12,6 @@ class Settings(BaseSettings):
     TEMP_UPLOAD_DIR: str = "temp_uploads"
     MAX_FILE_SIZE_MB: int = 5
     APP_ENV: str = "development"
+    GOOGLE_API_KEY: str
 
 settings = Settings()

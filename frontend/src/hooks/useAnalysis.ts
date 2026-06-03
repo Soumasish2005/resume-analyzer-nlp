@@ -25,6 +25,8 @@ export const useAnalysisResult = (resultId: string) => {
     queryKey: ["result", resultId],
     queryFn: () => analysisService.getResult(resultId),
     enabled: !!resultId,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // Keep data fresh for 5 mins
   });
 };
 
