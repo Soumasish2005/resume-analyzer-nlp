@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: analyzer_db
+    restart: always
+    environment:
+      POSTGRES_USER: analyzer_user
+      POSTGRES_PASSWORD: analyzer_pass
+      POSTGRES_DB: resume_analyzer
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analyzer_user -d resume_analyzer"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: analyzer_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://analyzer_user:analyzer_pass@db:5432/resume_analyzer
+      - JWT_SECRET_KEY=your-super-secret-key-change-this
+      - GOOGLE_API_KEY=AIzaSyApLgld3JsAGHKi7IItWk1IFB1peTDrjX8
+      - APP_ENV=production
+    volumes:
+      - ./backend/temp_uploads:/app/temp_uploads
+
+  frontend:
+    build: ./frontend
+    container_name: analyzer_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
