@@ -4,7 +4,7 @@ import {
   LayoutDashboard, 
   BarChart3, 
   Briefcase, 
-  Settings, 
+  Settings as SettingsIcon, 
   HelpCircle, 
   LogOut,
   Bell,
@@ -12,19 +12,23 @@ import {
   TrendingUp,
   DollarSign,
   Loader2,
-  Cpu
+  Cpu,
+  ArrowRight,
+  ShieldCheck,
+  Zap
 } from "lucide-react"
 import { useRef, useState, useEffect } from "react"
 import { useUploadResume, useAnalyzeResume } from "@/hooks/useAnalysis"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useLogout } from "@/hooks/useAuth"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 const SidebarItem = ({ icon: Icon, label, href, active, onClick }: any) => {
   const content = (
     <>
-      <Icon className={cn("w-5 h-5", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
-      <span>{label}</span>
+      <Icon className={cn("w-5 h-5 transition-colors", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+      <span className="font-semibold tracking-tight">{label}</span>
     </>
   )
 
@@ -33,10 +37,10 @@ const SidebarItem = ({ icon: Icon, label, href, active, onClick }: any) => {
       <button 
         onClick={onClick}
         className={cn(
-          "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-left",
+          "w-full flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-300 group text-left",
           active 
-            ? "bg-primary/10 text-primary font-semibold" 
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "bg-primary/10 text-primary shadow-sm shadow-primary/5" 
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
         )}
       >
         {content}
@@ -48,10 +52,10 @@ const SidebarItem = ({ icon: Icon, label, href, active, onClick }: any) => {
     <Link 
       to={href} 
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+        "flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-300 group",
         active 
-          ? "bg-primary/10 text-primary font-semibold" 
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "bg-primary/10 text-primary shadow-sm shadow-primary/5" 
+          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
       )}
     >
       {content}
@@ -82,31 +86,39 @@ const FullPageLoader = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm flex flex-col items-center justify-center gap-8"
+      className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center gap-10"
     >
-      <div className="relative w-24 h-24">
-        <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin" />
+      <div className="relative w-32 h-32">
+        <div className="absolute inset-0 rounded-full border-[6px] border-primary/10" />
+        <div className="absolute inset-0 rounded-full border-[6px] border-transparent border-t-primary animate-spin" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <Cpu className="w-8 h-8 text-primary" />
+          <motion.div
+            animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Cpu className="w-10 h-10 text-primary" />
+          </motion.div>
         </div>
       </div>
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Analyzing your resume</h2>
+      <div className="text-center space-y-4 max-w-sm">
+        <h2 className="text-3xl font-black tracking-tighter">Analyzing Resume</h2>
         <AnimatePresence mode="wait">
           <motion.p
             key={stepIndex}
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.3 }}
-            className="text-muted-foreground text-sm"
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4 }}
+            className="text-muted-foreground text-base font-medium h-6"
           >
             {ANALYSIS_STEPS[stepIndex]}
           </motion.p>
         </AnimatePresence>
       </div>
-      <p className="text-xs text-muted-foreground/60">This may take up to 30 seconds</p>
+      <div className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-full border border-border">
+         <ShieldCheck className="w-4 h-4 text-success" />
+         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Privacy Shield Enabled</span>
+      </div>
     </motion.div>
   )
 }
@@ -153,28 +165,30 @@ const Dashboard = () => {
   }
   
   return (
-    <div className="min-h-screen bg-background flex font-geist">
+    <div className="min-h-screen bg-background flex font-sans selection:bg-primary/20 transition-colors duration-500">
       <AnimatePresence>{isAnalyzing && <FullPageLoader />}</AnimatePresence>
+      
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-white flex flex-col p-6 fixed inset-y-0 h-screen overflow-y-auto">
-        <div className="flex items-center gap-2 mb-10 px-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">C</div>
-          <span className="text-xl font-bold tracking-tight">CVPilot</span>
+      <aside className="w-72 border-r border-border/40 bg-card/60 backdrop-blur-xl flex flex-col p-8 fixed inset-y-0 h-screen overflow-y-auto z-40">
+        <div className="flex items-center gap-3 mb-12 px-2 group cursor-pointer">
+          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">C</div>
+          <span className="text-2xl font-black tracking-tighter text-foreground">CVPilot</span>
         </div>
 
-        <div className="space-y-1 flex-1">
+        <div className="space-y-1.5 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/dashboard" active={location.pathname === '/dashboard'} />
           <SidebarItem icon={BarChart3} label="Analytics" href="/analytics" />
           <SidebarItem icon={Briefcase} label="Job Matches" href="/matches" />
-          <SidebarItem icon={Settings} label="Settings" href="/settings" />
+          <SidebarItem icon={SettingsIcon} label="Settings" href="/settings" />
         </div>
 
-        <div className="pt-6 border-t border-border mt-auto space-y-4">
-           <Button className="w-full h-12 rounded-xl flex gap-2 shadow-lg mb-8">
-              <UploadCloud className="w-4 h-4" /> Analyze Resume
-           </Button>
+        <div className="pt-8 border-t border-border/40 mt-auto space-y-6">
+           <div className="px-4 py-3 flex items-center justify-between bg-muted/10 rounded-2xl border border-border/20">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Interface</span>
+              <ThemeToggle className="w-8 h-8 scale-90" />
+           </div>
 
-           <div className="space-y-1">
+           <div className="space-y-1.5">
              <SidebarItem icon={HelpCircle} label="Help Center" href="/help" />
              <SidebarItem 
               icon={LogOut} 
@@ -187,123 +201,154 @@ const Dashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 ml-72 p-10 pb-24">
         {/* Header */}
-        <header className="flex items-center justify-between mb-12">
+        <header className="flex items-center justify-between mb-16 max-w-6xl">
           <div>
-            <h1 className="text-3xl font-bold">Welcome back</h1>
-            <p className="text-muted text-sm mt-1">Here is your recruitment intelligence overview.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-primary">
+               Recruitment Intelligence
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black tracking-tighter">Welcome back,</h1>
+            <p className="text-muted-foreground text-lg mt-2 font-medium">Ready to optimize your professional trajectory?</p>
           </div>
           <div className="flex items-center gap-4">
-             <button className="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center text-muted-foreground relative hover:bg-muted transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+             <button className="w-12 h-12 rounded-2xl bg-card border border-border/50 flex items-center justify-center text-muted-foreground relative hover:bg-secondary transition-all hover:scale-105 active:scale-95 shadow-sm">
+                <Bell className="w-5.5 h-5.5" />
+                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-[3px] border-card animate-pulse" />
              </button>
-             <button className="flex items-center gap-3 p-1 pr-4 bg-white border border-border rounded-full hover:bg-muted transition-colors">
-                <img src="https://ui-avatars.com/api/?name=User&background=0058BE&color=fff" alt="Avatar" className="w-8 h-8 rounded-full" />
-                <span className="text-sm font-semibold">Job Seeker</span>
+             <button className="flex items-center gap-4 p-1.5 pr-6 bg-card border border-border/50 rounded-2xl hover:bg-secondary transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm">
+                <img src="https://ui-avatars.com/api/?name=User&background=2563EB&color=fff&size=80" alt="Avatar" className="w-10 h-10 rounded-xl shadow-md shadow-primary/10" />
+                <span className="text-sm font-bold opacity-80">Job Seeker</span>
              </button>
           </div>
         </header>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 max-w-7xl">
           
-          {/* Main Column */}
-          <div className="xl:col-span-2 space-y-8">
-            {/* Action Card */}
-            <div className="bg-white p-10 rounded-[32px] border border-border/50 text-center relative overflow-hidden">
-               <h2 className="text-2xl font-bold mb-2">Ready for a match?</h2>
-               <p className="text-muted text-sm mb-10">Connect your resume with the perfect opportunity.</p>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div className="border-2 border-dashed border-border rounded-[24px] p-8 flex flex-col items-center justify-center gap-4 hover:border-primary/50 transition-colors cursor-pointer group relative">
-                    <div className="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                       <UploadCloud className="w-6 h-6" />
-                    </div>
-                    <div>
-                       <p className="font-bold">{file ? file.name : "Drag and drop resume"}</p>
-                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
-                        {uploadMutation.isPending ? "Uploading..." : "PDF or DOCX"}
-                       </p>
-                    </div>
-                    <div className="flex flex-col items-center gap-4">
-                      <Button 
-                        variant="outline" 
-                        className="h-10 px-6 rounded-lg text-xs font-bold border-primary text-primary"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        {file ? "Change File" : "Browse"}
-                      </Button>
-                      <input 
-                        ref={fileInputRef}
-                        id="resume-upload" 
-                        type="file" 
-                        className="hidden" 
-                        accept=".pdf,.docx" 
-                        onChange={handleFileChange} 
-                      />
-                    </div>
-                 </div>
-                 <div className="border border-border bg-slate-50/50 rounded-[24px] p-8 flex flex-col items-start text-left">
-                    <p className="font-bold mb-4">Job Description</p>
-                    <textarea 
-                      placeholder="Paste job description here..." 
-                      value={jd}
-                      onChange={(e) => setJd(e.target.value)}
-                      className="w-full flex-1 bg-transparent border-none focus:ring-0 text-sm resize-none"
-                    />
-                 </div>
+          {/* Main Action Column */}
+          <div className="xl:col-span-8 space-y-10">
+            {/* Analysis Tool Card */}
+            <div className="bg-card p-12 rounded-[48px] border border-border/50 relative overflow-hidden group shadow-premium">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+               <div className="relative z-10 text-center mb-12">
+                  <h2 className="text-3xl font-black mb-3 tracking-tight">Rapid Analysis</h2>
+                  <p className="text-muted-foreground font-medium text-base">Align your skills with the market in under 30 seconds.</p>
                </div>
                
-               {file && (
-                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+                  {/* Upload Zone */}
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="group-card border-2 border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/[0.02] rounded-[32px] p-10 flex flex-col items-center justify-center gap-5 transition-all cursor-pointer relative"
+                  >
+                    <div className={cn(
+                       "w-16 h-16 rounded-[24px] flex items-center justify-center transition-all duration-500 shadow-lg shadow-primary/5",
+                       file ? "bg-success text-white" : "bg-primary/5 text-primary"
+                    )}>
+                       {file ? <ShieldCheck className="w-8 h-8" /> : <UploadCloud className="w-8 h-8 group-hover:scale-110 transition-transform" />}
+                    </div>
+                    <div className="text-center">
+                       <p className="font-extrabold text-lg tracking-tight truncate max-w-[200px]">{file ? file.name : "Resume Document"}</p>
+                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1.5 opacity-60">
+                        {uploadMutation.isPending ? "Processing..." : "PDF, DOCX (Max 10MB)"}
+                       </p>
+                    </div>
                     <Button 
-                      className="h-12 px-12 rounded-xl shadow-lg"
-                      onClick={handleAnalyze}
-                      disabled={analyzeMutation.isPending || !file}
+                      variant="outline" 
+                      className="h-10 px-6 rounded-xl text-xs font-bold bg-background/50 hover:bg-secondary border-none"
                     >
-                      {analyzeMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                      {analyzeMutation.isPending ? "Analyzing..." : "Analyze Match"}
+                      {file ? "Replace File" : "Select Source"}
                     </Button>
-                 </motion.div>
-               )}
+                    <input 
+                      ref={fileInputRef}
+                      id="resume-upload" 
+                      type="file" 
+                      className="hidden" 
+                      accept=".pdf,.docx" 
+                      onChange={handleFileChange} 
+                    />
+                  </div>
+
+                  {/* Context Input */}
+                  <div className="border border-border/50 bg-secondary/30 rounded-[32px] p-8 flex flex-col group/jd focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                    <div className="flex items-center justify-between mb-5">
+                       <p className="font-black text-xs uppercase tracking-widest opacity-60">Job Target</p>
+                       <Zap className="w-4 h-4 text-orange-500 opacity-60" />
+                    </div>
+                    <textarea 
+                      placeholder="Paste job description or requirements here..." 
+                      value={jd}
+                      onChange={(e) => setJd(e.target.value)}
+                      className="w-full flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium leading-relaxed resize-none placeholder:text-muted-foreground/40"
+                    />
+                  </div>
+               </div>
+               
+               <AnimatePresence>
+                 {file && jd && (
+                   <motion.div 
+                    initial={{ opacity: 0, y: 20 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    className="mt-12 flex justify-center relative z-10"
+                   >
+                      <Button 
+                        size="lg"
+                        className="h-16 px-16 rounded-[24px] font-black text-lg shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                        onClick={handleAnalyze}
+                        disabled={analyzeMutation.isPending || !file}
+                      >
+                        {analyzeMutation.isPending && <Loader2 className="w-5 h-5 animate-spin mr-3" />}
+                        {analyzeMutation.isPending ? "Initializing..." : "Begin Neural Match"}
+                      </Button>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
             </div>
 
-            {/* Recent Matches */}
+            {/* Smart Matches */}
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold">Recent Job Matches</h3>
-                <Link to="/matches" className="text-xs font-bold text-primary hover:underline uppercase tracking-wider">View All Matches</Link>
+              <div className="flex items-center justify-between mb-8 px-4">
+                <h3 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                   <TrendingUp className="w-6 h-6 text-primary" />
+                   Priority Opportunities
+                </h3>
+                <Link to="/matches" className="group flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] hover:opacity-80 transition-opacity">
+                   Explore All <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  {[
-                  { title: 'Senior AI Engineer', company: 'Synthetix AI', match: 98, salary: '160k - 210k', color: 'bg-orange-500' },
-                  { title: 'Full Stack Developer', company: 'FinStream', match: 82, salary: '140k - 185k', color: 'bg-blue-500' },
-                  { title: 'Frontend Architect', company: 'Velocity Systems', match: 75, salary: '175k - 225k', color: 'bg-slate-800' }
+                  { title: 'Senior AI Engineer', company: 'Synthetix', match: 98, salary: '160k - 210k', gradient: 'from-orange-500 to-red-500' },
+                  { title: 'Full Stack Tech Lead', company: 'FinStream', match: 82, salary: '140k - 185k', gradient: 'from-blue-600 to-indigo-600' },
+                  { title: 'Frontend Architect', company: 'Velocity', match: 75, salary: '175k - 225k', gradient: 'from-emerald-500 to-teal-500' }
                  ].map((job, i) => (
                    <motion.div 
                     key={i}
-                    whileHover={{ y: -5 }}
-                    className="bg-white p-6 rounded-[24px] border border-border/50 shadow-sm"
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="bg-card p-8 rounded-[32px] border border-border/50 shadow-sm hover:shadow-premium transition-all relative overflow-hidden group"
                    >
-                     <div className="flex justify-between items-start mb-6">
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white", job.color)}>
-                           <Briefcase className="w-5 h-5" />
+                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/5 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+                     <div className="flex justify-between items-start mb-8">
+                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg", `bg-gradient-to-br ${job.gradient}`)}>
+                           <Briefcase className="w-6 h-6" />
                         </div>
-                        <span className={cn(
-                          "text-[10px] font-bold px-2 py-1 rounded-full",
-                          job.match > 90 ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600"
+                        <div className={cn(
+                          "text-[10px] font-black px-3 py-1.5 rounded-full tracking-widest shadow-sm",
+                          job.match > 90 ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
                         )}>
                           {job.match}% MATCH
-                        </span>
+                        </div>
                      </div>
-                     <h4 className="font-bold mb-1 truncate">{job.title}</h4>
-                     <p className="text-muted text-xs mb-6">{job.company} • Remote</p>
+                     <h4 className="font-extrabold text-lg mb-1 truncate tracking-tight">{job.title}</h4>
+                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest opacity-60 mb-8">{job.company}</p>
                      
-                     <div className="pt-6 border-t border-border flex items-center gap-2 text-muted-foreground">
-                        <DollarSign className="w-3 h-3" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">${job.salary}</span>
+                     <div className="pt-6 border-t border-border/50 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                           <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+                           <span className="text-[10px] font-black uppercase tracking-widest text-foreground">{job.salary}</span>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                      </div>
                    </motion.div>
                  ))}
@@ -311,52 +356,72 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Side Column */}
-          <div className="space-y-8">
-             {/* Score Card */}
-             <div className="bg-white p-8 rounded-[32px] border border-border/50">
-                <div className="flex items-center justify-between mb-8">
-                   <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Resume Score</p>
-                   <TrendingUp className="w-4 h-4 text-success" />
+          {/* Side Context Column */}
+          <div className="xl:col-span-4 space-y-10">
+             {/* Dynamic Score Analytics */}
+             <div className="bg-card p-10 rounded-[40px] border border-border/50 shadow-premium relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50" />
+                <div className="relative z-10 flex items-center justify-between mb-10 font-black">
+                   <p className="text-[11px] text-muted-foreground uppercase tracking-[0.3em]">Trajectory Score</p>
+                   <TrendingUp className="w-5 h-5 text-success" />
                 </div>
-                <div className="flex items-center justify-between gap-4">
-                   <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-bold">84</span>
-                      <span className="text-muted">/100</span>
+                <div className="relative z-10 flex items-center justify-around">
+                   <div className="flex items-baseline gap-1.5">
+                      <span className="text-6xl font-black tracking-tighter">84</span>
+                      <span className="text-muted-foreground font-bold opacity-40">/100</span>
                    </div>
-                   <div className="relative w-20 h-20">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle cx="40" cy="40" r="34" fill="transparent" stroke="currentColor" strokeWidth="8" className="text-muted/10" />
-                        <circle cx="40" cy="40" r="34" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray={213.6} strokeDashoffset={213.6 * (1 - 0.84)} className="text-primary" />
+                   <div className="relative w-24 h-24">
+                      <svg className="w-full h-full transform -rotate-90 drop-shadow-sm">
+                        <circle cx="48" cy="48" r="40" fill="transparent" stroke="currentColor" strokeWidth="8" className="text-muted/10" />
+                        <circle cx="48" cy="48" r="40" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray={251.2} strokeDashoffset={251.2 * (1 - 0.84)} className="text-primary" strokeLinecap="round" />
                       </svg>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                         <TrendingUp className="w-8 h-8" />
+                      </div>
                    </div>
                 </div>
-                <p className="text-xs text-muted mt-6 flex items-center gap-1 group">
-                   <TrendingUp className="w-3 h-3 text-success" /> 
-                   <span className="font-bold text-success">+12%</span> 
-                   <span>this week</span>
-                </p>
+                <div className="relative z-10 mt-10 p-4 bg-success/5 rounded-[20px] border border-success/10 flex items-center gap-4">
+                   <div className="w-10 h-10 bg-success rounded-xl flex items-center justify-center text-white shadow-lg shadow-success/10">
+                      <TrendingUp className="w-5 h-5" />
+                   </div>
+                   <div>
+                      <p className="text-xs font-black text-success uppercase tracking-widest">+12.4% Surge</p>
+                      <p className="text-[10px] font-bold text-muted-foreground opacity-70">Impact since last audit</p>
+                   </div>
+                </div>
              </div>
 
-             {/* Skills Card */}
-             <div className="bg-white p-8 rounded-[32px] border border-border/50">
-                <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-8">Top Skills Matched</p>
-                <div className="flex flex-wrap gap-2">
-                   {['TypeScript', 'System Design', 'LLM Integration', 'React', 'Python', 'Cloud Ops'].map((skill) => (
-                     <span key={skill} className="px-4 py-2 bg-blue-50 text-primary rounded-full text-xs font-semibold">
-                       {skill}
-                     </span>
+             {/* Semantic Skill Cloud */}
+             <div className="bg-card p-10 rounded-[40px] border border-border/50">
+                <p className="text-[11px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-10 opacity-60 font-sans">Top Core Competencies</p>
+                <div className="flex flex-wrap gap-3">
+                   {[
+                    { label: 'TypeScript', lvl: '94%' },
+                    { label: 'Cloud Architecture', lvl: '88%' },
+                    { label: 'LLM Pipeline', lvl: '91%' },
+                    { label: 'React Native', lvl: '76%' },
+                    { label: 'Security Ops', lvl: '82%' }
+                   ].map((skill) => (
+                     <div key={skill.label} className="group cursor-default">
+                       <span className="px-5 py-2.5 bg-secondary/80 text-foreground rounded-2xl text-[11px] font-extrabold border border-border/40 flex items-center gap-3 transition-all group-hover:border-primary/40 group-hover:bg-card">
+                         {skill.label}
+                         <span className="text-[9px] text-primary opacity-40 group-hover:opacity-100">{skill.lvl}</span>
+                       </span>
+                     </div>
                    ))}
                 </div>
              </div>
 
-             {/* Recent Activity or help */}
-             <div className="bg-primary/5 p-8 rounded-[32px] border border-primary/10">
-                <h4 className="font-bold mb-4">Want more insights?</h4>
-                <p className="text-xs text-muted leading-relaxed mb-6">
-                  Upgrade to Pro to get deep-dives into your skill gaps and personalized interview questions.
+             {/* Growth Plan Upgrade */}
+             <div className="bg-primary p-12 rounded-[40px] text-primary-foreground shadow-2xl shadow-primary/20 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                <h4 className="text-2xl font-black mb-4 tracking-tight">Expand Intelligence</h4>
+                <p className="text-sm font-semibold opacity-80 leading-relaxed mb-10">
+                  Unlock deep-dives into industry skill gaps and neural interview simulations.
                 </p>
-                <Button className="w-full rounded-xl" variant="outline">Learn More</Button>
+                <Button className="w-full h-14 rounded-2xl bg-white text-primary hover:bg-white/90 font-black shadow-xl transition-transform hover:scale-105 active:scale-95 group-hover:rotate-1">
+                  UPGRADE TO PRO
+                </Button>
              </div>
           </div>
 

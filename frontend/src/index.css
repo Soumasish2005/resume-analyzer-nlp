@@ -1,152 +1,130 @@
 @import "tailwindcss";
 
-/* ── Light Theme Tokens (Tailwind v4 @theme) ───────────────────────────────── */
+/* ── Professional Theme Tokens (Tailwind v4) ───────────────────────────────── */
 @theme {
-  --color-background: hsl(210 40% 98%);
-  --color-foreground: hsl(222 47% 11%);
+  --font-sans: "Inter", "Outfit", system-ui, sans-serif;
+  
+  /* Link theme colors to CSS variables for dynamic switching */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
 
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(222 47% 11%);
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
 
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222 47% 11%);
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
 
-  --color-primary: hsl(212 100% 37%);
-  --color-primary-foreground: hsl(210 40% 98%);
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
 
-  --color-secondary: hsl(210 40% 96%);
-  --color-secondary-foreground: hsl(222 47% 11%);
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
 
-  --color-muted: hsl(215 16% 47%);
-  --color-muted-foreground: hsl(215 16% 47%);
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
 
-  --color-accent: hsl(210 40% 96%);
-  --color-accent-foreground: hsl(222 47% 11%);
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
 
-  --color-destructive: hsl(0 84% 60%);
-  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
 
-  --color-border: hsl(214 32% 91%);
-  --color-input: hsl(214 32% 91%);
-  --color-ring: hsl(212 100% 37%);
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
 
-  --color-success: hsl(142 76% 36%);
-  --color-warning: hsl(38 92% 50%);
+  --color-success: hsl(150 100% 33%);
+  --color-warning: hsl(45 93% 47%);
 
+  --radius-3xl: 2.5rem;
+  --radius-2xl: 2rem;
   --radius-xl: 1.5rem;
   --radius-lg: 1.25rem;
   --radius-md: 0.75rem;
-  --radius-sm: 0.5rem;
+
+  --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
 }
 
-/* ── CSS Variable Layers ───────────────────────────────────────────────────── */
+/* ── Dynamic Layers ────────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    /* Light mode — clean, airy whites */
-    --background:         210 40% 98%;
-    --foreground:         222 47% 11%;
-    --primary:            212 100% 37%;
+    /* Refined Light Palette - Sophisticated Greys */
+    --background: 210 20% 98%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
-    --card:               0 0% 100%;
-    --card-foreground:    222 47% 11%;
-    --popover:            0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --secondary:          210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted:              215 16% 47%;
-    --muted-foreground:   215 16% 47%;
-    --accent:             210 40% 96%;
-    --accent-foreground:  222 47% 11%;
-    --destructive:        0 84% 60%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 224 71% 4%;
+    --muted: 215 16% 47%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 221 83% 53%;
+    --accent-foreground: 221 83% 53%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border:             214 32% 91%;
-    --input:              214 32% 91%;
-    --ring:               212 100% 37%;
-    --radius:             1.5rem;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
   }
 
   .dark {
-    /*
-      Dark mode design rationale:
-      - Background: Deep navy (not pure black) — easier on the eyes
-      - Surface:    Slightly elevated slate — creates visual depth
-      - Card:       Another step up — separates components clearly
-      - Primary:    Brand blue shifted brighter for dark contrast
-      - Borders:    Subtle, just enough to define edges
-      - Muted text: 60%+ lightness to remain legible on dark surfaces
-    */
-
-    /* Page background — deepest layer */
-    --background:         224 28% 8%;
-
-    /* Main text — near-white with slight cool tint */
-    --foreground:         210 30% 95%;
-
-    /* Brand blue — lightened to stay vibrant on dark */
-    --primary:            212 90% 55%;
-    --primary-foreground: 224 28% 8%;
-
-    /* Cards — lifted surface above the background */
-    --card:               224 25% 13%;
-    --card-foreground:    210 30% 95%;
-
-    /* Popovers — same as card */
-    --popover:            224 25% 13%;
-    --popover-foreground: 210 30% 95%;
-
-    /* Secondary surfaces — e.g. slate-50 equivalent in dark */
-    --secondary:          224 22% 18%;
-    --secondary-foreground: 210 30% 95%;
-
-    /* Muted surfaces and text */
-    --muted:              224 22% 18%;
-    --muted-foreground:   215 15% 62%;
-
-    /* Accent — same as secondary in dark */
-    --accent:             224 22% 18%;
-    --accent-foreground:  210 30% 95%;
-
-    /* Destructive stays red but a bit muted */
-    --destructive:        0 65% 50%;
-    --destructive-foreground: 210 30% 95%;
-
-    /* Borders — subtle enough not to dominate */
-    --border:             224 20% 20%;
-    --input:              224 22% 17%;
-
-    /* Focus ring — the brand blue */
-    --ring:               212 90% 55%;
+    /* Deep Slate Dark Theme */
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 4%;
+    --secondary: 217 32% 12%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 20% 65%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 217 91% 60%;
+    --destructive: 0 63% 40%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 32% 16%;
+    --input: 217 32% 16%;
+    --ring: 217 91% 60%;
   }
 }
 
-/* ── Base Styles ───────────────────────────────────────────────────────────── */
+/* ── Professional Base Tweaks ─────────────────────────────────────────────── */
 @layer base {
   * {
     @apply border-border;
   }
 
   html {
-    /* Smooth theme transitions — avoids jarring flash */
-    transition: background-color 0.25s ease, color 0.2s ease;
+    scroll-behavior: smooth;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Dark mode scrollbar styling */
-  .dark ::-webkit-scrollbar {
-    width: 6px;
+  /* Sophisticated Selection */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
   }
-  .dark ::-webkit-scrollbar-track {
-    background: hsl(224 28% 10%);
+}
+
+/* ── Utility Extensions ───────────────────────────────────────────────────── */
+@layer utilities {
+  .glass {
+    @apply bg-background/70 backdrop-blur-md border border-border/40;
   }
-  .dark ::-webkit-scrollbar-thumb {
-    background: hsl(224 20% 25%);
-    border-radius: 3px;
-  }
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: hsl(224 20% 35%);
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70;
   }
 }
