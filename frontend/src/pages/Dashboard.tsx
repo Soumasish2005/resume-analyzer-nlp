@@ -134,6 +134,7 @@ const Dashboard = () => {
   const [file, setFile] = useState<File | null>(null)
   const [jd, setJd] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleLogout = () => {
     logoutMutation.mutate()
@@ -143,6 +144,7 @@ const Dashboard = () => {
     if (e.target.files?.[0]) {
       const selectedFile = e.target.files[0]
       setFile(selectedFile)
+      setError(null) // Reset error on new file
     }
   }
 
@@ -152,17 +154,20 @@ const Dashboard = () => {
       formData.append("resume", file)
       formData.append("job_description", jd)
       setIsAnalyzing(true)
+      setError(null)
       
       uploadMutation.mutate(formData, {
         onSuccess: (data: any) => {
           navigate(`/analytics?id=${data.result_id}`)
         },
-        onError: () => {
+        onError: (err: any) => {
           setIsAnalyzing(false)
+          setError(err.response?.data?.detail || "An error occurred. Please ensure your file is a valid resume.")
         }
       })
     }
   }
+
   
   return (
     <div className="min-h-screen bg-background flex font-sans selection:bg-primary/20 transition-colors duration-500">
@@ -285,13 +290,27 @@ const Dashboard = () => {
                   </div>
                </div>
                
-               <AnimatePresence>
-                 {file && jd && (
-                   <motion.div 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    className="mt-12 flex justify-center relative z-10"
-                   >
+                <AnimatePresence>
+                  {error && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-8 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl text-destructive text-sm font-bold text-center relative z-10"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                <AnimatePresence>
+                  {file && jd && (
+                    <motion.div 
+                     initial={{ opacity: 0, y: 20 }} 
+                     animate={{ opacity: 1, y: 0 }} 
+                     className="mt-12 flex flex-col items-center gap-6 relative z-10"
+                    >
+
                       <Button 
                         size="lg"
                         className="h-16 px-16 rounded-[24px] font-black text-lg shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"

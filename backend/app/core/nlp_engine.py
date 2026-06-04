@@ -57,7 +57,53 @@ def extract_keywords(text: str) -> list[str]:
     return keywords
 
 
+# ── Document Validation & OCR ────────────────────────────────────────────────
+
+
+def validate_document_type(text: str) -> bool:
+    """Uses Gemini to check if the text contents belong to a Resume/CV."""
+    prompt = f"""
+    Analyze the following text and determine if it is a Resume or Curriculum Vitae.
+    Respond with ONLY 'YES' if it is a resume, or 'NO' if it is something else (e.g., invoice, letter, receipt, etc.).
+    
+    Text:
+    {text[:2000]}
+    """
+    try:
+        response = model.generate_content(prompt)
+        return "YES" in response.text.upper()
+    except:
+        return True # Fallback
+
+def extract_from_scanned_pdf(file_bytes: bytes) -> dict:
+    """Uses Gemini's multimodal capabilities to perform OCR on a scanned PDF."""
+    prompt = """
+    This is a scanned PDF of a resume. Please perform OCR and extract the text. 
+    Format the output as a JSON dictionary with the following keys for sections:
+    'summary', 'experience', 'skills', 'projects', 'education', 'contact'.
+    Return the result as a valid JSON object.
+    """
+    try:
+        content = [
+            prompt,
+            {
+                "mime_type": "application/pdf",
+                "data": file_bytes
+            }
+        ]
+        response = model.generate_content(content)
+        text = response.text.strip()
+        if "```json" in text: text = text.split("```json")[1].split("```")[0].strip()
+        res = json.loads(text)
+        if not isinstance(res, dict): return {"other": text}
+        return res
+    except Exception as e:
+        print(f"Scanned OCR Failure: {e}")
+        return {"other": "OCR failed. Please try a clearer document."}
+
+
 # ── Profile Extraction (Advanced AI Pass) ────────────────────────────────────
+
 
 def extract_entities(sections: dict) -> dict:
     """Uses Gemini with a Local Regex Fallback and strict type enforcement."""

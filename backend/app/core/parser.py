@@ -114,9 +114,14 @@ def extract_sections_from_pdf(file_bytes: bytes) -> dict:
         
         # If result is too empty, something went wrong (likely scanned PDF)
         if len("".join(result.values())) < 100:
-            return _fallback_py_mu_pdf(file_bytes)
+            fallback = _fallback_py_mu_pdf(file_bytes)
+            # If fallback also has little text, it's likely a scanned document
+            if len("".join(fallback.values())) < 100:
+                fallback["is_scanned"] = True
+            return fallback
             
         return result
+
 
     except Exception:
         return _fallback_py_mu_pdf(file_bytes)

@@ -86,9 +86,26 @@ def run_analysis_pipeline(
         # Step 1 — Parse (Two-pass structural parsing)
         logger.info(f"Starting analysis for user {user_id}. Step 1: Parsing.")
         sections = extract_text(file_bytes, file_ext)
-        full_raw_text = "\n".join(sections.values())
+        
+        # OCR Support for scanned documents
+        if sections.get("is_scanned"):
+            from app.core.nlp_engine import extract_from_scanned_pdf
+            logger.info("Scanned PDF detected. Triggering Gemini OCR pass.")
+            sections = extract_from_scanned_pdf(file_bytes)
 
-        # Step 2 — Project Analysis (LLM Inferred Skills)
+        full_raw_text = "\n".join([str(v) for v in sections.values() if v])
+
+        # Step 2 — Document Validation (Ensure it's a resume)
+        from app.core.nlp_engine import validate_document_type
+        if not validate_document_type(full_raw_text):
+            logger.warning(f"Non-resume upload rejected for user {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The uploaded document does not appear to be a Resume or CV. Please upload a valid resume and try again."
+            )
+
+        # Step 3 — Project Analysis (LLM Inferred Skills)
+
         # We enrich the 'skills' section or a virtual collection with LLM insights
         inferred_skills = infer_skills_from_projects(sections.get("projects", ""))
         
