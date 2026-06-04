@@ -1,7 +1,6 @@
 import { motion } from "framer-motion"
 import { 
   BarChart3, 
-  FileStack, 
   Search,
   LayoutDashboard,
   Briefcase,
@@ -15,18 +14,20 @@ import {
   Clock,
   Eye,
   Download,
-  Trash2
+  Trash2,
+  Filter
 } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { useLogout } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 const SidebarItem = ({ icon: Icon, label, href, active, onClick }: any) => {
   const content = (
     <>
-      <Icon className={cn("w-5 h-5", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
-      <span>{label}</span>
+      <Icon className={cn("w-5 h-5 transition-colors", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+      <span className="font-semibold tracking-tight">{label}</span>
     </>
   )
 
@@ -35,10 +36,10 @@ const SidebarItem = ({ icon: Icon, label, href, active, onClick }: any) => {
       <button 
         onClick={onClick}
         className={cn(
-          "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-left",
+          "w-full flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-300 group text-left",
           active 
-            ? "bg-primary/10 text-primary font-semibold" 
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "bg-primary/10 text-primary shadow-sm shadow-primary/5" 
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
         )}
       >
         {content}
@@ -50,10 +51,10 @@ const SidebarItem = ({ icon: Icon, label, href, active, onClick }: any) => {
     <Link 
       to={href} 
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+        "flex items-center gap-3.5 px-5 py-3.5 rounded-2xl transition-all duration-300 group",
         active 
-          ? "bg-primary/10 text-primary font-semibold" 
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "bg-primary/10 text-primary shadow-sm shadow-primary/5" 
+          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
       )}
     >
       {content}
@@ -70,30 +71,34 @@ const Resumes = () => {
   }
 
   const resumes = [
-    { name: "Senior_AI_Engineer_2024.pdf", size: "1.2 MB", date: "2 hours ago", matches: 12 },
-    { name: "Full_Stack_Dev_Resume.pdf", size: "840 KB", date: "3 days ago", matches: 8 },
-    { name: "Product_Designer_V2.pdf", size: "2.1 MB", date: "1 week ago", matches: 5 },
+    { name: "Senior_AI_Engineer_2024.pdf", size: "1.2 MB", date: "2 hours ago", matches: 12, type: 'PDF' },
+    { name: "Full_Stack_Dev_Resume.pdf", size: "840 KB", date: "3 days ago", matches: 8, type: 'PDF' },
+    { name: "Product_Designer_V2.docx", size: "2.1 MB", date: "1 week ago", matches: 5, type: 'DOCX' },
   ]
 
   return (
-    <div className="min-h-screen bg-background flex font-geist">
+    <div className="min-h-screen bg-background flex font-sans selection:bg-primary/20 transition-colors duration-500">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-white flex flex-col p-6 fixed inset-y-0 h-screen overflow-y-auto">
-        <div className="flex items-center gap-2 mb-10 px-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">C</div>
-          <span className="text-xl font-bold tracking-tight">CVPilot</span>
+      <aside className="w-72 border-r border-border/40 bg-card/60 backdrop-blur-xl flex flex-col p-8 fixed inset-y-0 h-screen overflow-y-auto z-40">
+        <div className="flex items-center gap-3 mb-12 px-2 group cursor-pointer">
+          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">C</div>
+          <span className="text-2xl font-black tracking-tighter text-foreground">CVPilot</span>
         </div>
 
-        <div className="space-y-1 flex-1">
+        <div className="space-y-1.5 flex-1">
           <SidebarItem icon={LayoutDashboard} label="Dashboard" href="/dashboard" />
           <SidebarItem icon={BarChart3} label="Analytics" href="/analytics" />
-          <SidebarItem icon={FileStack} label="Resume Bank" href="/resumes" active={location.pathname === '/resumes'} />
+          <SidebarItem icon={FileText} label="Resume Bank" href="/resumes" active={location.pathname === '/resumes'} />
           <SidebarItem icon={Briefcase} label="Job Matches" href="/matches" />
           <SidebarItem icon={Settings} label="Settings" href="/settings" />
         </div>
 
-        <div className="pt-6 border-t border-border mt-auto space-y-4">
-           <div className="space-y-1">
+        <div className="pt-8 border-t border-border/40 mt-auto space-y-6">
+           <div className="px-4 py-3 flex items-center justify-between bg-muted/10 rounded-2xl border border-border/20">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Interface</span>
+              <ThemeToggle className="w-8 h-8 scale-90" />
+           </div>
+           <div className="space-y-1.5">
              <SidebarItem icon={HelpCircle} label="Help Center" href="/help" />
              <SidebarItem 
               icon={LogOut} 
@@ -106,71 +111,90 @@ const Resumes = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64 p-8">
-        <header className="flex items-center justify-between mb-12">
+      <main className="flex-1 ml-72 p-10 pb-24">
+        <header className="flex items-center justify-between mb-16 max-w-6xl">
           <div>
-            <h1 className="text-3xl font-bold">Resume Bank</h1>
-            <p className="text-muted text-sm mt-1">Manage and optimize your professional profiles.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-muted-foreground">
+               Source Intelligence
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black tracking-tighter text-foreground">Resume Bank</h1>
+            <p className="text-muted-foreground text-lg mt-2 font-medium">Manage and optimize your neural source documents.</p>
           </div>
           <div className="flex items-center gap-4">
-             <Button className="h-10 px-6 rounded-xl flex gap-2">
-                <Plus className="w-4 h-4" /> Upload New
+             <Button className="h-14 px-8 rounded-2xl font-black shadow-xl shadow-primary/20 group uppercase tracking-widest text-[11px] scale-105">
+                <Plus className="w-4 h-4 mr-3 group-hover:rotate-90 transition-transform" /> Initialize Upload
              </Button>
-             <button className="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center text-muted-foreground relative hover:bg-muted transition-colors">
-                <Bell className="w-5 h-5" />
+             <button className="w-12 h-12 rounded-2xl bg-card border border-border/50 flex items-center justify-center text-muted-foreground relative hover:bg-secondary transition-all shadow-sm">
+                <Bell className="w-5.5 h-5.5" />
+                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-[3px] border-card animate-pulse" />
              </button>
           </div>
         </header>
 
-        <div className="bg-white rounded-[32px] border border-border/50 shadow-sm overflow-hidden">
-           <div className="p-6 border-b border-border flex items-center justify-between bg-slate-50/50">
-              <div className="relative w-96">
-                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="bg-card rounded-[40px] border border-border/50 shadow-premium overflow-hidden group/bank max-w-6xl">
+           <div className="p-8 border-b border-border/40 flex flex-col sm:flex-row items-center justify-between gap-6 bg-secondary/10">
+              <div className="relative w-full sm:w-96 group/search">
+                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground opacity-60 group-focus-within/search:text-primary transition-colors" />
                  <input 
                   type="text" 
-                  placeholder="Search resumes..." 
-                  className="w-full h-11 pl-11 pr-4 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="Query resume archives..." 
+                  className="w-full h-12 pl-12 pr-6 bg-card border border-border/50 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/30 shadow-inner"
                  />
               </div>
-              <div className="flex items-center gap-2">
-                 <Button variant="outline" size="sm" className="rounded-lg">Recent</Button>
-                 <Button variant="outline" size="sm" className="rounded-lg">Popular</Button>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                 <button className="flex-1 sm:flex-none h-11 px-5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest bg-card hover:bg-secondary transition-all">Latest</button>
+                 <button className="flex-1 sm:flex-none h-11 px-5 rounded-xl border border-border/60 text-[10px] font-black uppercase tracking-widest bg-card hover:bg-secondary transition-all">Most Matched</button>
+                 <button className="w-11 h-11 rounded-xl border border-border/60 flex items-center justify-center bg-card hover:bg-secondary transition-all"><Filter className="w-4 h-4 opacity-60" /></button>
               </div>
            </div>
 
-           <div className="divide-y divide-border">
+           <div className="divide-y divide-border/30">
               {resumes.map((resume, i) => (
-                <div key={i} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
-                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary border border-primary/10">
-                         <FileText className="w-6 h-6" />
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="p-8 flex flex-col md:flex-row items-center justify-between hover:bg-secondary/20 transition-all group relative"
+                >
+                   <div className="flex items-center gap-6 w-full lg:w-auto">
+                      <div className="w-16 h-16 bg-primary/5 rounded-[22px] flex items-center justify-center text-primary border border-primary/10 shadow-inner transition-transform group-hover:scale-110 group-hover:rotate-2">
+                         <FileText className="w-8 h-8" />
                       </div>
-                      <div>
-                         <h4 className="font-bold text-sm mb-1">{resume.name}</h4>
-                         <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {resume.date}</span>
+                      <div className="min-w-0">
+                         <h4 className="font-black text-lg mb-1.5 tracking-tight truncate max-w-[280px] lg:max-w-md">{resume.name}</h4>
+                         <div className="flex items-center flex-wrap gap-4 text-[10px] font-black text-muted-foreground uppercase tracking-[0.15em] opacity-50">
+                            <span className="flex items-center gap-2 bg-secondary px-2 py-0.5 rounded-md border border-border/40">{resume.type}</span>
+                            <span className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" /> {resume.date}</span>
                             <span>{resume.size}</span>
-                            <span className="text-primary">{resume.matches} matches found</span>
+                            <span className="text-primary opacity-100">{resume.matches} semantic matches</span>
                          </div>
                       </div>
                    </div>
 
-                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-white transition-colors text-muted-foreground hover:text-foreground">
-                         <Eye className="w-4 h-4" />
+                   <div className="flex items-center gap-3 mt-6 lg:mt-0 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all pointer-events-none group-hover:pointer-events-auto">
+                      <button className="w-11 h-11 rounded-2xl bg-card border border-border/50 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all shadow-sm hover:-translate-y-0.5">
+                         <Eye className="w-4.5 h-4.5" />
                       </button>
-                      <button className="w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-white transition-colors text-muted-foreground hover:text-foreground">
-                         <Download className="w-4 h-4" />
+                      <button className="w-11 h-11 rounded-2xl bg-card border border-border/50 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all shadow-sm hover:-translate-y-0.5">
+                         <Download className="w-4.5 h-4.5" />
                       </button>
-                      <button className="w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-white transition-colors text-muted-foreground hover:text-red-500">
-                         <Trash2 className="w-4 h-4" />
+                      <button className="w-11 h-11 rounded-2xl bg-card border border-border/50 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-all shadow-sm hover:-translate-y-0.5">
+                         <Trash2 className="w-4.5 h-4.5" />
                       </button>
-                      <button className="w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:bg-white transition-colors text-muted-foreground">
-                         <MoreVertical className="w-4 h-4" />
+                      <div className="w-px h-6 bg-border/40 mx-1" />
+                      <button className="w-11 h-11 rounded-2xl bg-card border border-border/50 flex items-center justify-center hover:bg-secondary transition-all shadow-sm">
+                         <MoreVertical className="w-4.5 h-4.5" />
                       </button>
                    </div>
-                </div>
+                </motion.div>
               ))}
+           </div>
+           
+           <div className="p-8 bg-secondary/5 flex justify-center border-t border-border/20">
+              <button className="text-[10px] font-black text-muted-foreground uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-2">
+                 View Historical archives <Plus className="w-3 h-3" />
+              </button>
            </div>
         </div>
       </main>
